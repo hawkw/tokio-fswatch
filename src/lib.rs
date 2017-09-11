@@ -1,21 +1,16 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::io;
 use std::convert;
 
-#[derive(Debug)]
-pub struct Event {
-    path: Option<PathBuf>,
-    kind: EventKind,
-}
 
-#[derive(Debug, Copy, Clone)]
-pub enum EventKind {
-    Created,
-    Deleted,
-    AttrsModified,
-    WriteOpen,
-    WriteClosed,
-    Renamed,
+#[derive(Debug)]
+pub enum Event<'a> {
+    Created(&'a Path),
+    Deleted(&'a Path),
+    AttrsModified(&'a Path),
+    WriteOpen(&'a Path),
+    WriteClosed(&'a Path),
+    Renamed(&'a Path, &'a Path),
     Rescan,
 }
 
@@ -29,3 +24,6 @@ impl convert::From<io::Error> for Error {
         Error::Io(error)
     }
 }
+
+#[cfg(target_os = "linux")]
+pub mod inotify;
