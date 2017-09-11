@@ -1,0 +1,6 @@
+[package]
+name = "tokio-fswatch"
+version = "0.0.1"
+authors = ["Eliza Weisman <eliza@buoyant.io>"]
+
+[dependencies]
