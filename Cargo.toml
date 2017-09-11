@@ -4,3 +4,5 @@ version = "0.0.1"
 authors = ["Eliza Weisman <eliza@buoyant.io>"]
 
 [dependencies]
+futures = "0.1"
+tokio-core = "0.1"
