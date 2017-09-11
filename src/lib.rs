@@ -1,6 +1,24 @@
+extern crate futures;
+extern crate tokio_core;
+
 use std::path::Path;
 use std::io;
-use std::convert;
+use std::convert::{self, AsRef};
+
+use tokio_core::reactor;
+use futures::stream::Stream;
+
+pub trait Watch<'a>: Sized + Stream<Item = Event<'a>, Error = Error> {
+    /// Create a new `Watch` with the given `Handle` to a Tokio `Reactor`.
+    fn new(handle: &reactor::Handle) -> Result<Self, Error>;
+
+    /// Attempt to establish a watch on a new path.
+    fn add_path<P: AsRef<Path>>(&self, path: P) -> Result<Self, Error>;
+
+    fn remove_path<P: AsRef<Path>>(&self, path: P) -> Result<(), Error>;
+
+    fn close(self) -> Result<(), Error>;
+}
 
 
 #[derive(Debug)]
