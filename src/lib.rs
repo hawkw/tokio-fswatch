@@ -5,23 +5,22 @@ use futures::Stream;
 use tokio_core::reactor;
 
 use std::convert::{self, AsRef};
-use std::path::Path;
 use std::io;
+use std::path::Path;
 
-pub trait Watch<'event>: Stream<Item=Event<'event>, Error=Error> + Sized {
-    type Builder: Builder<'event, Watch=Self>;
+pub trait Watch<'event>: Stream<Item = Event<'event>, Error = Error> + Sized {
+    type Builder: Builder<'event, Watch = Self>;
 
     /// Return a builder for constructing a new watch.
     fn builder() -> Self::Builder;
 
     /// Construct a new watch on the specified set of paths
     fn new<I, P>(paths: I, handle: &reactor::Handle) -> Self
-    where I: IntoIterator<Item=P>,
-          P: AsRef<Path>
+    where
+        I: IntoIterator<Item = P>,
+        P: AsRef<Path>,
     {
-        Self::builder()
-            .add_paths(paths)
-            .build(handle)
+        Self::builder().add_paths(paths).build(handle)
     }
 }
 
@@ -33,8 +32,9 @@ pub trait Builder<'event> {
     fn add_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self;
 
     fn add_paths<I, P>(&mut self, paths: I) -> &mut Self
-    where I: IntoIterator<Item=P>,
-          P: AsRef<Path>
+    where
+        I: IntoIterator<Item = P>,
+        P: AsRef<Path>,
     {
         paths.into_iter().fold(self, Self::add_path)
     }
@@ -42,10 +42,11 @@ pub trait Builder<'event> {
     fn filter_event(&mut self, kind: EventKind) -> &mut Self;
 
     fn filter_events<I>(&mut self, kinds: I) -> &mut Self
-    where I: IntoIterator<Item=EventKind> {
+    where
+        I: IntoIterator<Item = EventKind>,
+    {
         kinds.into_iter().fold(self, Self::filter_event)
     }
-
 }
 
 #[derive(Debug)]
