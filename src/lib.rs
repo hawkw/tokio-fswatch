@@ -1,34 +1,67 @@
 extern crate futures;
 extern crate tokio_core;
 
+use futures::Stream;
+use tokio_core::reactor;
+
+use std::convert::{self, AsRef};
 use std::path::Path;
 use std::io;
-use std::convert::{self, AsRef};
 
-use tokio_core::reactor;
-use futures::stream::Stream;
+pub trait Watch<'event>: Stream<Item=Event<'event>, Error=Error> + Sized {
+    type Builder: Builder<'event, Watch=Self>;
 
-pub trait Watch<'a>: Sized + Stream<Item = Event<'a>, Error = Error> {
-    /// Create a new `Watch` with the given `Handle` to a Tokio `Reactor`.
-    fn new(handle: &reactor::Handle) -> Result<Self, Error>;
+    /// Return a builder for constructing a new watch.
+    fn builder() -> Self::Builder;
 
-    /// Attempt to establish a watch on a new path.
-    fn add_path<P: AsRef<Path>>(&self, path: P) -> Result<Self, Error>;
-
-    fn remove_path<P: AsRef<Path>>(&self, path: P) -> Result<(), Error>;
-
-    fn close(self) -> Result<(), Error>;
+    /// Construct a new watch on the specified set of paths
+    fn new<I, P>(paths: I, handle: &reactor::Handle) -> Self
+    where I: IntoIterator<Item=P>,
+          P: AsRef<Path>
+    {
+        Self::builder()
+            .add_paths(paths)
+            .build(handle)
+    }
 }
 
+pub trait Builder<'event> {
+    type Watch: Watch<'event>;
+
+    fn build(&self, handle: &reactor::Handle) -> Self::Watch;
+
+    fn add_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self;
+
+    fn add_paths<I, P>(&mut self, paths: I) -> &mut Self
+    where I: IntoIterator<Item=P>,
+          P: AsRef<Path>
+    {
+        paths.into_iter().fold(self, Self::add_path)
+    }
+
+    fn filter_event(&mut self, kind: EventKind) -> &mut Self;
+
+    fn filter_events<I>(&mut self, kinds: I) -> &mut Self
+    where I: IntoIterator<Item=EventKind> {
+        kinds.into_iter().fold(self, Self::filter_event)
+    }
+
+}
 
 #[derive(Debug)]
-pub enum Event<'a> {
-    Created(&'a Path),
-    Deleted(&'a Path),
-    AttrsModified(&'a Path),
-    WriteOpen(&'a Path),
-    WriteClosed(&'a Path),
-    Renamed(&'a Path, &'a Path),
+pub struct Event<'a> {
+    kind: EventKind,
+    path: &'a Path,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum EventKind {
+    Created,
+    Deleted,
+    AttrsModified,
+    WriteOpen,
+    WriteClosed,
+    Renamed,
     Rescan,
 }
 
@@ -42,6 +75,3 @@ impl convert::From<io::Error> for Error {
         Error::Io(error)
     }
 }
-
-#[cfg(target_os = "linux")]
-pub mod inotify;
