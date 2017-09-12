@@ -1,0 +1,46 @@
+---
+language: rust
+dist: trusty
+sudo: false
+
+cache:
+  cargo: true
+
+rust:
+ - nightly
+ - beta
+ - stable
+
+script:
+  # Run tests
+  - cargo test
+
+  script:
+  # Run tests
+  - cargo test
+  # Test examples in readme
+  - rustdoc --test README.md -L target/debug/deps
+
+after_success:
+  - bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+  - test $TRAVIS_RUST_VERSION = nightly && cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  - cargo tarpaulin --out Xml && bash <(curl -s https://codecov.io/bash)
+
+jobs:
+  include:
+    - stage: docs
+      script: cargo doc --no-deps
+      install: skip
+      deploy:
+        provider:  pages
+        skip_cleanup: true
+        github_token: $GH_TOKEN
+        target_branch: gh-pages
+        local_dir: target/doc
+        on:
+          branch: master
+          repo: hawkw/tokio-fswatch
+          rust: nightly
+
+env:
+  secure: "Kq4N9fghft71TcbeubLtYbjGOSX82xJQTd8BMLAPJNJDWn1oZFnIeAbzYRvKD7nxHAntvMJDuR6wCm3PY3AoxOW23W2t6wvBNg5+pp4n2lOx+xKN0LA64ys0tYweWX01/SWOno/ul+SGRO8pMPO4tlnlulNiFWgjTFRfAcumwlb68foWZs3EsrFgeF/H/SWTPKYD8CVLYGpyfULGSf/p+e849+qI8IrMbQZ7/JPz6JgH2gn9kqyIXBGSknTaCk0+PNPGNApxTZmy+7798v11eD2vkgioPvOvkDLoraBI6RQ4qfx60vVPlMQpoZbHpu7PC8NQUaPhb5NU1lmob94AaB0U8MFl+ofvuoIE68xGrX+gKyb1HzJOxAZIarUbzt8x77ABeBD9+gPgGLYY2/KwZTae4A/DcNKD9MS4pdbTm8CEsSGHJfcBzjR7HnI6GCdzsiHBPEZn+5NTec2z9vaaLlEBamtu3kPBfWRvrCIkpr1PV/EfY2MN5nogpFSU1B2+HXTsRnYJfjoZG5qAO0SaYiXncNzpqnzKjUIiDWoYRvsROmSUXnNwDePTi1XK/6KpPjrjquzXudp7qcvC8mlObLc/N2bpWWIHDKIZAik3vsmzxJg6Qj6fBpgqHe+kvRaIGoyhEmZmJqKqizI8tt9yd+96zOGLX6oNoGwWqCEuyGQ="
