@@ -15,12 +15,6 @@ script:
   # Run tests
   - cargo test
 
-  script:
-  # Run tests
-  - cargo test
-  # Test examples in readme
-  - rustdoc --test README.md -L target/debug/deps
-
 after_success:
   - bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
   - test $TRAVIS_RUST_VERSION = nightly && cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
