@@ -15,13 +15,15 @@ script:
   # Run tests
   - cargo test
 
-after_success:
-  - bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-  - test $TRAVIS_RUST_VERSION = nightly && cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
-  - cargo tarpaulin --out Xml && bash <(curl -s https://codecov.io/bash)
+
 
 jobs:
   include:
+    - stage: test
+      after_success:
+        - bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+        - test $TRAVIS_RUST_VERSION = nightly && cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+        - cargo tarpaulin --out Xml && bash <(curl -s https://codecov.io/bash)
     - stage: docs
       script: cargo doc --no-deps
       install: skip
