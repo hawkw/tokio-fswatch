@@ -29,7 +29,7 @@ pub struct InotifyBuilder<'a> {
 impl<'event> Builder<'event> for InotifyBuilder<'event> {
     type Watch = InotifyWatch<'event>;
 
-    fn build(&self, handle: &reactor::Handle) -> Self::Watch {
+    fn build(&self, handle: &reactor::Handle) -> Result<Self::Watch, Error> {
         unimplemented!()
     }
 

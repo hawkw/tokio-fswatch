@@ -18,7 +18,7 @@ pub trait Watch<'event>: Stream<Item=Event<'event>, Error=Error> + Sized {
     fn builder() -> Self::Builder;
 
     /// Construct a new watch on the specified set of paths
-    fn new<I, P>(paths: I, handle: &reactor::Handle) -> Self
+    fn new<I, P>(paths: I, handle: &reactor::Handle) -> Result<Self, Error>
     where I: IntoIterator<Item=P>,
           P: AsRef<Path>,
     {
@@ -31,7 +31,7 @@ pub trait Watch<'event>: Stream<Item=Event<'event>, Error=Error> + Sized {
 pub trait Builder<'event> {
     type Watch: Watch<'event>;
 
-    fn build(&self, handle: &reactor::Handle) -> Self::Watch;
+    fn build(&self, handle: &reactor::Handle) -> Result<Self::Watch, Error>;
 
     fn add_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self;
 
