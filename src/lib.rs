@@ -1,5 +1,8 @@
 extern crate futures;
 extern crate tokio_core;
+#[cfg(target_os = "linux")]
+extern crate inotify;
+extern crate mio;
 
 use futures::Stream;
 use tokio_core::reactor;
@@ -17,7 +20,7 @@ pub trait Watch<'event>: Stream<Item=Event<'event>, Error=Error> + Sized {
     /// Construct a new watch on the specified set of paths
     fn new<I, P>(paths: I, handle: &reactor::Handle) -> Self
     where I: IntoIterator<Item=P>,
-          P: AsRef<Path>
+          P: AsRef<Path>,
     {
         Self::builder()
             .add_paths(paths)
@@ -34,7 +37,7 @@ pub trait Builder<'event> {
 
     fn add_paths<I, P>(&mut self, paths: I) -> &mut Self
     where I: IntoIterator<Item=P>,
-          P: AsRef<Path>
+          P: AsRef<Path>,
     {
         paths.into_iter().fold(self, Self::add_path)
     }
