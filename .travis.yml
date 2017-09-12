@@ -35,6 +35,10 @@ jobs:
           branch: master
           repo: hawkw/tokio-fswatch
           rust: nightly
+    - stage: fmt
+      script: cargo fmt -- --write-mode=diff
+      rust: nightly
+      install: if ! cargo fmt --help >/dev/null 2>&1 ; then cargo install rustfmt-nightly ; fi
 
 env:
   secure: "Kq4N9fghft71TcbeubLtYbjGOSX82xJQTd8BMLAPJNJDWn1oZFnIeAbzYRvKD7nxHAntvMJDuR6wCm3PY3AoxOW23W2t6wvBNg5+pp4n2lOx+xKN0LA64ys0tYweWX01/SWOno/ul+SGRO8pMPO4tlnlulNiFWgjTFRfAcumwlb68foWZs3EsrFgeF/H/SWTPKYD8CVLYGpyfULGSf/p+e849+qI8IrMbQZ7/JPz6JgH2gn9kqyIXBGSknTaCk0+PNPGNApxTZmy+7798v11eD2vkgioPvOvkDLoraBI6RQ4qfx60vVPlMQpoZbHpu7PC8NQUaPhb5NU1lmob94AaB0U8MFl+ofvuoIE68xGrX+gKyb1HzJOxAZIarUbzt8x77ABeBD9+gPgGLYY2/KwZTae4A/DcNKD9MS4pdbTm8CEsSGHJfcBzjR7HnI6GCdzsiHBPEZn+5NTec2z9vaaLlEBamtu3kPBfWRvrCIkpr1PV/EfY2MN5nogpFSU1B2+HXTsRnYJfjoZG5qAO0SaYiXncNzpqnzKjUIiDWoYRvsROmSUXnNwDePTi1XK/6KpPjrjquzXudp7qcvC8mlObLc/N2bpWWIHDKIZAik3vsmzxJg6Qj6fBpgqHe+kvRaIGoyhEmZmJqKqizI8tt9yd+96zOGLX6oNoGwWqCEuyGQ="
