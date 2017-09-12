@@ -75,3 +75,7 @@ impl convert::From<io::Error> for Error {
         Error::Io(error)
     }
 }
+
+
+#[cfg(target_os = "linux")]
+pub mod inotify;
