@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
 use futures::{Stream, Poll};
-use inotify::{Inotify, Event as InotifyEvent};
+use inotify::{Inotify, Event as InotifyEvent, WatchMask};
 use tokio_core::reactor::PollEvented;
 use mio::unix::EventedFd;
 
@@ -30,6 +30,17 @@ impl<'event> Builder<'event> for InotifyBuilder<'event> {
     type Watch = InotifyWatch<'event>;
 
     fn build(&self, handle: &reactor::Handle) -> Result<Self::Watch, Error> {
+        //TODO: do we want to allow the user to pass flags to inotify_init1()?
+        let inotify = Inotify::init()?;
+        let mask =
+            self.filter.iter()
+                .map(WatchMask::from)
+                .collect::<WatchMask>()
+                ;
+
+        for &path in self.paths {
+            inotify.add_watch(path, mask)?;
+        }
         unimplemented!()
     }
 
@@ -62,5 +73,23 @@ impl<'event> Stream for InotifyWatch<'event> {
             unimplemented!()
         });
         unimplemented!()
+    }
+}
+
+impl convert::Into<WatchMask> for EventKind {
+    fn into(kind: EventKind) -> WatchMask {
+        // TODO: handle file/dir logic --- e.g., output DELETE for dirs,
+        //       DELETE_SELF for files?
+        use inotify::watch_mask::*;
+        use ::EventKind::*;
+        match kind {
+            Created => CREATE,
+            Deleted => DELETE_SELF,
+            AttrsModified => ATTRIB,
+            WriteOpen => OPEN,
+            WriteClosed => CLOSE_WRITE,
+            Renamed => MOVE_SELF,
+            Rescan => unimplemented!()
+        }
     }
 }
