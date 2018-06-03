@@ -1,11 +1,17 @@
-use std::convert;
-use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
+use std::{
+    convert,
+    collections::VecDeque,
+    marker::PhantomData,
+    path::{Path, PathBuf},
+};
 
 use futures::{Stream, Poll};
 use inotify::{Inotify, Event as InotifyEvent, WatchMask};
-use tokio_core::reactor::PollEvented;
-use mio::unix::EventedFd;
+use tokio::reactor::PollEvented2 as PollEvented;
+use mio::{
+    unix::EventedF
+    Ready,
+};
 
 use ::*;
 
@@ -13,8 +19,7 @@ pub struct InotifyWatch<'event> {
     inotify: Inotify,
     fd: PollEvented<EventedFd<'event>>,
 
-    // TODO: would be nice to not have to allocate here...
-    debounce: Vec<Event<'event>>,
+    debounce: VecDeque<Event<'event>>,
 
     _event_lifetime: PhantomData<Event<'event>>,
 }
@@ -64,15 +69,38 @@ impl<'event> Watch<'event> for InotifyWatch<'event> {
 }
 
 impl<'event> Stream for InotifyWatch<'event> {
-    type Item = Event<'event>;
+    type Item = Event<&'event Path>;
     type Error = Error;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
-        self.fd.poll_read().map(|_| {
-            // poll_read() returned Ready(()) -> map over & change result type
-            unimplemented!()
-        });
-        unimplemented!()
+        if !self.debounce.is_empty() {
+            if self.debounce.len() == 1 {
+                // Reregister interest if there are no more queued events.
+                self.fd.clear_read_ready(Ready::readable())?;
+            }
+
+            return Ok(Async::Ready(self.debounce.pop_front()));
+        };
+
+        if let Async::NotReady = self.fd.poll_read_ready()? {
+            self.fd.clear_read_ready(Ready::readable())?;
+            return Ok(Async::NotReady);
+        }
+
+        let mut events = self.inotify.read_events()?;
+        if let Some(ev) = events.next() {
+            self.debounce.extend(events);
+
+            if self.debounce.is_empty() {
+                // Reregister interest if there are no more queued events.
+                self.fd.clear_read_ready(Ready::readable())?;
+            }
+
+            return Ok(Async::Ready(Some(ev)));
+        } else {
+            self.fd.clear_read_ready(Ready::readable())?;
+            Ok(Async::NotReady)
+        }
     }
 }
 

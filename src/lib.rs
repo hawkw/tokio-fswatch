@@ -52,9 +52,9 @@ pub trait Builder<'event> {
 }
 
 #[derive(Debug)]
-pub struct Event<'a> {
+pub struct Event<P> {
     kind: EventKind,
-    path: &'a Path,
+    path: P,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
